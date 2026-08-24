@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>deposit-rates · test console</title>
+<style>
+  @font-face { font-family:'Cera Pro'; src:url('https://sscdwidgets.github.io/fonts/CeraPro-Regular.ttf') format('truetype'); font-weight:400; font-display:swap; }
+  @font-face { font-family:'Cera Pro'; src:url('https://sscdwidgets.github.io/fonts/CeraPro-Medium.ttf') format('truetype'); font-weight:500; font-display:swap; }
+  @font-face { font-family:'Cera Pro'; src:url('https://sscdwidgets.github.io/fonts/CeraPro-Bold.ttf') format('truetype'); font-weight:700; font-display:swap; }
+
+  :root{
+    --navy:#002D72; --gold:#FFBF3F; --blue:#0960BB;
+    --bg:#F5F7FA; --card:#FFFFFF; --line:#DDE4EC;
+    --ink:#1A2433; --muted:#66788F;
+    --ok:#1E8E5A; --warn:#C77E00; --fail:#C0392B; --idle:#AAB6C4;
+    --console:#0E1626; --console-ink:#C9D6E8;
+    --mono:ui-monospace,'SF Mono','Cascadia Code',Consolas,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Cera Pro',-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--ink);padding:28px 20px 60px;}
+  .wrap{max-width:920px;margin:0 auto}
+
+  header{margin-bottom:22px}
+  .eyebrow{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);margin-bottom:6px}
+  .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--gold);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,191,63,.55)}50%{box-shadow:0 0 0 6px rgba(255,191,63,0)}}
+  @media (prefers-reduced-motion:reduce){.eyebrow .dot{animation:none}}
+  h1{font-size:26px;font-weight:700;color:var(--navy)}
+  header p{color:var(--muted);font-size:14px;margin-top:4px}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:14px}
+  .panel h2{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+  .cfg{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .cfg .full{grid-column:1/-1}
+  label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:4px}
+  input{width:100%;padding:9px 11px;font-size:13.5px;font-family:var(--mono);border:1px solid var(--line);border-radius:8px;background:#FBFCFE;color:var(--ink)}
+  input:focus{outline:2px solid var(--blue);outline-offset:0;border-color:var(--blue)}
+  .hint{font-size:11.5px;color:var(--muted);margin-top:4px}
+
+  .runbar{display:flex;align-items:center;gap:12px;margin:18px 0 14px;flex-wrap:wrap}
+  .btn{font-family:inherit;font-size:13.5px;font-weight:700;border:none;border-radius:8px;padding:10px 18px;cursor:pointer}
+  .btn.primary{background:var(--navy);color:#fff}
+  .btn.primary:hover{background:#003b94}
+  .btn.primary:disabled{background:var(--idle);cursor:default}
+  .runbar .status{font-size:13px;color:var(--muted)}
+
+  .step{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:12px;overflow:hidden;border-left:4px solid var(--idle)}
+  .step[data-state="ok"]{border-left-color:var(--ok)}
+  .step[data-state="warn"]{border-left-color:var(--warn)}
+  .step[data-state="fail"]{border-left-color:var(--fail)}
+  .step[data-state="running"]{border-left-color:var(--gold)}
+  .step-head{display:flex;align-items:center;gap:12px;padding:13px 16px}
+  .lamp{flex:none;width:11px;height:11px;border-radius:50%;background:var(--idle)}
+  .step[data-state="ok"] .lamp{background:var(--ok)}
+  .step[data-state="warn"] .lamp{background:var(--warn)}
+  .step[data-state="fail"] .lamp{background:var(--fail)}
+  .step[data-state="running"] .lamp{background:var(--gold);animation:pulse 1s infinite}
+  .step-num{flex:none;font-family:var(--mono);font-size:11px;color:var(--muted);width:16px}
+  .step-title{font-weight:700;font-size:14.5px}
+  .step-sub{font-size:12.5px;color:var(--muted)}
+  .step-head .grow{flex:1;min-width:0}
+  .step-meta{font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:nowrap}
+  .btn.run{background:#EEF3F9;color:var(--navy);padding:7px 14px;font-size:12.5px}
+  .btn.run:hover{background:#E1EAF5}
+
+  .step-body{display:none;border-top:1px solid var(--line)}
+  .step.open .step-body{display:block}
+  .urlrow{display:flex;align-items:center;gap:8px;padding:9px 16px;background:#F3F6FA;font-family:var(--mono);font-size:11.5px;color:var(--muted);overflow-x:auto}
+  .urlrow .u{white-space:nowrap}
+  .copy{flex:none;font-family:inherit;font-size:11px;border:1px solid var(--line);background:#fff;border-radius:6px;padding:3px 8px;cursor:pointer;color:var(--muted)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;padding:12px 16px 2px}
+  .chip{font-size:12px;font-weight:500;background:#EEF3F9;color:var(--navy);border-radius:99px;padding:4px 12px}
+  .chip.bad{background:#FBEAE7;color:var(--fail)}
+  .chip.good{background:#E6F4ED;color:var(--ok)}
+  .chip.mid{background:#FCF3E2;color:var(--warn)}
+  pre{margin:12px 16px 16px;background:var(--console);color:var(--console-ink);font-family:var(--mono);font-size:12px;line-height:1.55;border-radius:8px;padding:14px;overflow:auto;max-height:420px;white-space:pre-wrap;word-break:break-word}
+  pre .k{color:#7FB4E8} pre .s{color:#A8D5A2} pre .n{color:#F0C674} pre .b{color:#E8A87F}
+
+  footer{margin-top:26px;font-size:11.5px;color:var(--muted);font-family:var(--mono)}
+  @media (max-width:640px){.cfg{grid-template-columns:1fr}.step-meta{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow"><span class="dot"></span>Deposit Rates Pipeline</div>
+    <h1>Worker test console</h1>
+    <p>Runs the five-step smoke test against the deposit-rates worker and the fred-proxy benchmark. Steps run in order; a hard failure stops the sequence.</p>
+  </header>
+
+  <div class="panel">
+    <h2>Configuration</h2>
+    <div class="cfg">
+      <div class="full">
+        <label for="base">Worker base URL</label>
+        <input id="base" value="https://deposit-rates.jameswspence.workers.dev" spellcheck="false">
+      </div>
+      <div>
+        <label for="key">Admin key</label>
+        <input id="key" type="password" placeholder="ADMIN_KEY secret" spellcheck="false">
+        <div class="hint">Kept in this tab only — never saved.</div>
+      </div>
+      <div>
+        <label for="slug">Bank slug</label>
+        <input id="slug" value="south-state-bank" spellcheck="false">
+      </div>
+      <div>
+        <label for="cert">FDIC cert #</label>
+        <input id="cert" value="33555" spellcheck="false">
+      </div>
+      <div>
+        <label for="fred">fred-proxy series URL (benchmark)</label>
+        <input id="fred" value="https://fred-proxy.jameswspence.workers.dev/series?id=SNDR" spellcheck="false">
+      </div>
+    </div>
+  </div>
+
+  <div class="runbar">
+    <button class="btn primary" id="runAll">Run full sequence</button>
+    <span class="status" id="seqStatus"></span>
+  </div>
+
+  <div id="steps"></div>
+
+  <footer>console cx-1.0.0 · worker target build dr-1.0.0</footer>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var $ = function(id){ return document.getElementById(id); };
+
+  // Persist everything except the key
+  ['base','slug','cert','fred'].forEach(function(id){
+    try{ var v = localStorage.getItem('dr-'+id); if(v) $(id).value = v; }catch(e){}
+    $(id).addEventListener('change', function(){ try{ localStorage.setItem('dr-'+id, $(id).value.trim()); }catch(e){} });
+  });
+
+  var cfg = function(){
+    return {
+      base: $('base').value.trim().replace(/\/+$/,''),
+      key: $('key').value.trim(),
+      slug: $('slug').value.trim(),
+      cert: $('cert').value.trim(),
+      fred: $('fred').value.trim()
+    };
+  };
+
+  /* ---- step definitions ------------------------------------------------ */
+  // verdict(body, httpStatus) -> { state: ok|warn|fail, chips: [{t,cls}] }
+  var STEPS = [
+    {
+      id:'health', title:'Worker health', sub:'Build tag, D1 wiring, tracked banks',
+      url:function(c){ return c.base + '/health'; },
+      verdict:function(b){
+        if(!b || !b.build) return { state:'fail', chips:[{t:'No build tag — is the worker deployed?', cls:'bad'}] };
+        var chips = [{t:'build '+b.build, cls:'good'},{t:(b.active_banks||0)+' active bank'+(b.active_banks===1?'':'s'), cls:(b.active_banks>0?'':'bad')}];
+        if(b.latest_capture) chips.push({t:'latest capture '+b.latest_capture, cls:''});
+        else chips.push({t:'no captures yet — expected before first refresh', cls:'mid'});
+        return { state: b.active_banks>0 ? 'ok' : 'warn', chips:chips };
+      }
+    },
+    {
+      id:'debug', title:'Live parse check', sub:'Fetches the DepositAccounts page without storing — the moment of truth',
+      url:function(c){ return c.base + '/debug?slug=' + encodeURIComponent(c.slug) + '&key=' + encodeURIComponent(c.key); },
+      verdict:function(b, http){
+        if(http === 403 || (b && b.error === 'Forbidden')) return { state:'fail', chips:[{t:'403 from worker — admin key wrong or missing', cls:'bad'}] };
+        if(b && b.ok){
+          var chips = [{t:(b.products||[]).length + ' products parsed', cls:'good'}];
+          if(b.bank_name) chips.push({t:b.bank_name, cls:''});
+          if(b.cert) chips.push({t:'cert '+b.cert, cls:''});
+          if(b.health) chips.push({t:'DA health '+b.health, cls:''});
+          return { state:'ok', chips:chips };
+        }
+        if(b && b.status === 'http_error') return { state:'fail', chips:[{t:b.detail + ' from DepositAccounts — likely blocking Cloudflare IPs', cls:'bad'}] };
+        if(b && b.status === 'parse_empty') return { state:'warn', chips:[{t:'Page fetched but no rate rows matched — send the diag block back for a parser fix', cls:'mid'}] };
+        return { state:'fail', chips:[{t:'Unexpected response', cls:'bad'}] };
+      }
+    },
+    {
+      id:'refresh', title:'Store first snapshot', sub:'Same scrape, written to D1 with anomaly checks',
+      url:function(c){ return c.base + '/refresh?slug=' + encodeURIComponent(c.slug) + '&key=' + encodeURIComponent(c.key); },
+      verdict:function(b, http){
+        if(http === 403 || (b && b.error === 'Forbidden')) return { state:'fail', chips:[{t:'403 — admin key wrong or missing', cls:'bad'}] };
+        if(b && b.stored) return { state:'ok', chips:[{t:'Snapshot stored', cls:'good'},{t:(b.products||[]).length+' rows', cls:''}] };
+        if(b && b.error) return { state:'fail', chips:[{t:b.error, cls:'bad'}] };
+        return { state:'fail', chips:[{t:'Not stored — see response', cls:'bad'}] };
+      }
+    },
+    {
+      id:'rates', title:'Widget payload', sub:'Exactly what the Competitor Rates tab will consume',
+      url:function(c){ return c.base + '/rates?cert=' + encodeURIComponent(c.cert); },
+      verdict:function(b){
+        var banks = (b && b.banks) || [];
+        if(!banks.length) return { state:'fail', chips:[{t:'Empty payload — cert mismatch, or step 3 didn\u2019t store', cls:'bad'}] };
+        var chips = [{t:banks.length+' bank'+(banks.length===1?'':'s'), cls:'good'}];
+        var n = 0, topCd = null;
+        banks.forEach(function(bk){ (bk.products||[]).forEach(function(p){ n++; if(p.category==='cd' && (!topCd || p.apy > topCd.apy)) topCd = p; }); });
+        chips.push({t:n+' products', cls:''});
+        if(topCd) chips.push({t:'top CD '+topCd.apy+'% \u00b7 '+topCd.account_name, cls:''});
+        return { state:'ok', chips:chips };
+      }
+    },
+    {
+      id:'bench', title:'National benchmark', sub:'FDIC national rate via fred-proxy — no new plumbing if this answers',
+      url:function(c){ return c.fred; },
+      verdict:function(b, http){
+        if(http !== 200) return { state:'fail', chips:[{t:'HTTP '+http+' from fred-proxy', cls:'bad'}] };
+        if(b && b.error) return { state:'warn', chips:[{t:'Proxy answered with an error — check the series ID', cls:'mid'}] };
+        var obs = (b && (b.observations || b.data || b.values)) || null;
+        var chips = [{t:'fred-proxy answered', cls:'good'}];
+        if(Array.isArray(obs) && obs.length){
+          var last = obs[obs.length-1];
+          chips.push({t:obs.length+' observations', cls:''});
+          if(last && (last.value !== undefined)) chips.push({t:'latest '+last.value+(last.date?' ('+last.date+')':''), cls:''});
+        } else {
+          chips.push({t:'shape unrecognized — verify visually below', cls:'mid'});
+        }
+        return { state:'ok', chips:chips };
+      }
+    }
+  ];
+
+  /* ---- rendering ------------------------------------------------------- */
+  var host = $('steps');
+  STEPS.forEach(function(s, i){
+    var el = document.createElement('div');
+    el.className = 'step'; el.id = 'step-' + s.id; el.dataset.state = 'idle';
+    el.innerHTML =
+      '<div class="step-head">' +
+        '<span class="lamp"></span><span class="step-num">' + (i+1) + '</span>' +
+        '<div class="grow"><div class="step-title">' + s.title + '</div><div class="step-sub">' + s.sub + '</div></div>' +
+        '<span class="step-meta" id="meta-' + s.id + '"></span>' +
+        '<button class="btn run" data-step="' + i + '">Run</button>' +
+      '</div>' +
+      '<div class="step-body">' +
+        '<div class="urlrow"><button class="copy" data-copy="' + s.id + '">Copy URL</button><span class="u" id="url-' + s.id + '"></span></div>' +
+        '<div class="chips" id="chips-' + s.id + '"></div>' +
+        '<pre id="out-' + s.id + '"></pre>' +
+      '</div>';
+    host.appendChild(el);
+    el.querySelector('.step-head').addEventListener('click', function(e){
+      if(e.target.closest('button')) return;
+      el.classList.toggle('open');
+    });
+  });
+
+  host.addEventListener('click', function(e){
+    var run = e.target.closest('.btn.run');
+    if(run){ runStep(Number(run.dataset.step)); return; }
+    var cp = e.target.closest('.copy');
+    if(cp){
+      var s = STEPS.find(function(x){ return x.id === cp.dataset.copy; });
+      navigator.clipboard.writeText(s.url(cfg())).then(function(){
+        cp.textContent = 'Copied'; setTimeout(function(){ cp.textContent = 'Copy URL'; }, 1200);
+      });
+    }
+  });
+
+  function redact(u){ return u.replace(/([?&]key=)[^&]*/,'$1\u2022\u2022\u2022'); }
+
+  function paintJSON(pre, obj){
+    var raw = JSON.stringify(obj, null, 2)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    raw = raw.replace(/("(?:[^"\\]|\\.)*")(\s*:)?/g, function(m, str, colon){
+      return colon ? '<span class="k">'+str+'</span>'+colon : '<span class="s">'+str+'</span>';
+    }).replace(/\b(true|false|null)\b/g,'<span class="b">$1</span>')
+      .replace(/(:\s*)(-?\d+(?:\.\d+)?)/g,'$1<span class="n">$2</span>');
+    pre.innerHTML = raw;
+  }
+
+  function setState(id, state){ $('step-' + id).dataset.state = state; }
+
+  function runStep(i){
+    var s = STEPS[i], c = cfg();
+    var el = $('step-' + s.id);
+    el.classList.add('open');
+    setState(s.id, 'running');
+    $('meta-' + s.id).textContent = '';
+    $('chips-' + s.id).innerHTML = '';
+    $('out-' + s.id).textContent = 'Requesting\u2026';
+    var url = s.url(c);
+    $('url-' + s.id).textContent = 'GET ' + redact(url);
+    var t0 = performance.now();
+
+    return fetch(url).then(function(res){
+      return res.text().then(function(txt){
+        var ms = Math.round(performance.now() - t0);
+        var body = null;
+        try{ body = JSON.parse(txt); }catch(e){}
+        $('meta-' + s.id).textContent = res.status + ' \u00b7 ' + ms + 'ms';
+        if(body) paintJSON($('out-' + s.id), body);
+        else $('out-' + s.id).textContent = txt.slice(0, 4000) || '(empty body)';
+        var v = body || res.ok ? s.verdict(body, res.status) : { state:'fail', chips:[{t:'HTTP '+res.status, cls:'bad'}] };
+        setState(s.id, v.state);
+        $('chips-' + s.id).innerHTML = v.chips.map(function(ch){
+          return '<span class="chip ' + (ch.cls||'') + '">' + ch.t + '</span>';
+        }).join('');
+        return v.state;
+      });
+    }).catch(function(err){
+      $('meta-' + s.id).textContent = 'network error';
+      $('out-' + s.id).textContent = String(err) + '\n\nWorker unreachable \u2014 check the base URL, or the worker isn\u2019t deployed yet.';
+      setState(s.id, 'fail');
+      return 'fail';
+    });
+  }
+
+  $('runAll').addEventListener('click', function(){
+    var btn = $('runAll'), status = $('seqStatus');
+    btn.disabled = true;
+    var i = 0;
+    function next(){
+      if(i >= STEPS.length){ status.textContent = 'Sequence complete.'; btn.disabled = false; return; }
+      status.textContent = 'Step ' + (i+1) + ' of ' + STEPS.length + ' \u2014 ' + STEPS[i].title + '\u2026';
+      runStep(i).then(function(state){
+        if(state === 'fail'){
+          status.textContent = 'Stopped at step ' + (i+1) + ' (' + STEPS[i].title + ') \u2014 fix and re-run.';
+          btn.disabled = false;
+          return;
+        }
+        i++; next();
+      });
+    }
+    next();
+  });
+})();
+</script>
+</body>
+</html>
