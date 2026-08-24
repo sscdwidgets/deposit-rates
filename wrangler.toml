@@ -1,0 +1,16 @@
+# deposit-rates worker — build dr-1.0.0
+name = "deposit-rates"
+main = "worker.js"
+compatibility_date = "2026-08-01"
+
+# Daily at 11:10 UTC (~7:10am ET) — after DA's overnight rate refresh
+[triggers]
+crons = ["10 11 * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "deposit-rates"
+database_id = "REPLACE_AFTER: wrangler d1 create deposit-rates"
+
+# Optional but recommended — protects /refresh and /debug:
+#   wrangler secret put ADMIN_KEY
