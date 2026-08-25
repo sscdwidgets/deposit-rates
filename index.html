@@ -2230,6 +2230,28 @@
     color: var(--gray-700); background: var(--gray-50); margin-top: 6px;
   }
   .curve-src-pill.live { border-color: #bfe3cf; background: #e6f4ed; color: var(--up); }
+  .ratesmap-section { padding: 18px 20px; }
+  .ratesmap-canvas {
+    height: 520px; border-radius: var(--radius); border: 1px solid var(--gray-200);
+    overflow: hidden; background: var(--gray-100); z-index: 0;
+  }
+  .ratesmap-select {
+    font-family: var(--font); font-size: 13px; color: var(--gray-900);
+    border: 1px solid var(--gray-300); border-radius: var(--radius-sm);
+    padding: 7px 10px; background: var(--white); max-width: 220px;
+  }
+  .ratesmap-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+  .ratesmap-chip {
+    font-family: var(--font); font-size: 12px; font-weight: 500; cursor: pointer;
+    border: 1px solid var(--gray-300); border-radius: 99px; padding: 6px 12px;
+    background: var(--white); color: var(--gray-900);
+  }
+  .ratesmap-chip strong { color: var(--navy); margin-left: 4px; }
+  .ratesmap-chip .ratesmap-chip-n { color: var(--gray-500); font-size: 10.5px; margin-left: 6px; }
+  .ratesmap-chip.hl { border-color: var(--navy); background: var(--navy-50); }
+  .ratesmap-chip.norate { opacity: 0.6; }
+  .ratesmap-note { margin-top: 12px; font-size: 11px; color: var(--gray-500); line-height: 1.6; }
+  @media (max-width: 840px) { .ratesmap-canvas { height: 380px; } }
 
   .competitors-picker {
     margin-top: 14px;
@@ -4443,7 +4465,7 @@
           Preview as an app
         </button>
       </nav>
-      <div class="m-drawer-footer">v1.90</div>
+      <div class="m-drawer-footer">v1.91</div>
     </aside>
   </div>
 
@@ -4618,6 +4640,13 @@
           </svg>
           Competitor Rates
         </button>
+        <button class="content-tab" data-panel="map" role="tab" aria-selected="false">
+          <svg class="tab-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 14s4.5-4.1 4.5-7.5a4.5 4.5 0 1 0-9 0C3.5 9.9 8 14 8 14z"/>
+            <circle cx="8" cy="6.5" r="1.6"/>
+          </svg>
+          Rates Map
+        </button>
       </div>
 
       <div class="tab-panel active" id="panel-table">
@@ -4713,6 +4742,20 @@
           <div class="cof-summary" id="cofSummary"></div>
         </section>
       </div>
+      <div class="tab-panel" id="panel-map">
+        <section class="chart-section ratesmap-section">
+          <div class="chart-header">
+            <div>
+              <h3>Rates Map — Tracked Market</h3>
+              <div class="chart-sub">FDIC-reported branch locations for tracked institutions, colored by their published rate for the selected product. Click an institution below to zoom to its footprint; click again to release.</div>
+            </div>
+            <select id="mapProduct" class="ratesmap-select" aria-label="Product"></select>
+          </div>
+          <div class="ratesmap-chips" id="mapChips"></div>
+          <div id="ratesMap" class="ratesmap-canvas"></div>
+          <div class="ratesmap-note">Gold = top published rate for the selected product · Blue = published rate · Gray = no mapped product. Branch coordinates: FDIC Summary of Deposits (banks; credit unions show headquarters only). Rates are published rates collected via DepositAccounts.com — regionally priced products (†) may vary by branch. Always verify with the institution.</div>
+        </section>
+      </div>
       <div class="tab-panel" id="panel-competitors">
         <section class="chart-section competitors-section">
           <div class="chart-header">
@@ -4755,7 +4798,7 @@
 
   <footer class="widget-footer">
     <span>Competitor rates: published rates via DepositAccounts.com · National averages: FDIC via FRED · Modeled data where noted · Always verify with the institution</span>
-    <span>v1.90</span>
+    <span>v1.91</span>
   </footer>
 
   <!-- ===== Mobile Bottom Nav (≤840px only) ===== -->
@@ -4784,6 +4827,13 @@
         <path d="M12 19c0-2.5 2.7-4.5 6-4.5s3 1 3 1"/>
       </svg>
       <span>Comp</span>
+    </button>
+    <button class="m-nav-tab" data-m-panel="map" aria-label="Rates Map">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/>
+        <circle cx="12" cy="10" r="2.5"/>
+      </svg>
+      <span>Map</span>
     </button>
   </nav>
 
@@ -5880,6 +5930,7 @@ async function fetchLiveMarket(){
   }
   renderLiveStatus();
   renderCompetitors();
+  if (typeof rmOnLiveData === 'function') rmOnLiveData();
 }
 
 /* ---- FDIC national averages (FRED mirrors of the FDIC National Rates) ---- */
@@ -7155,6 +7206,7 @@ document.querySelectorAll('.content-tab').forEach(tab => {
     if (target === 'chart' && state.data) renderHeatmap();
     if (target === 'construction' && state.data) renderConstruction();
     if (target === 'cof') renderCOF();
+    if (target === 'map') openRatesMap();
     postResize();
   });
 });
@@ -8959,6 +9011,216 @@ updateMyRatesBtnState();
 renderSidebar();
 renderMain();
 renderCompetitors();
+
+
+/* =====================================================================
+   RATES MAP (v1.91)
+   ---------------------------------------------------------------------
+   Branch-level map of the tracked competitor market, modeled on the
+   click-a-bank-to-highlight interaction of large rate-map products but
+   scoped honestly to institutions in the deposit-rates pipeline:
+   - Branch coordinates: FDIC Summary of Deposits via fdic-proxy (banks).
+   - Credit unions: HQ pin only (NCUA branch data not wired yet).
+   - Marker color: institution's published rate for the selected product.
+   Leaflet is lazy-loaded from CDN the first time the tab opens.
+   ===================================================================== */
+const RM = {
+  inited: false, libReady: false, map: null, layer: null,
+  product: 'td_12m', highlight: null,
+  branches: {},            // cert -> [{lat,lon,label}] (cached)
+  loading: false
+};
+const RM_FDIC_PROXY = 'https://fdic-proxy.jameswspence.workers.dev/?url=';
+/* HQ fallback pins for institutions FDIC SOD can't cover (credit unions). */
+const RM_CU_HQ = {
+  'suncoast-schools-cu': { lat: 27.9959, lon: -82.3903, label: 'Headquarters · Tampa, FL' },
+  'gte-cu':              { lat: 27.9553, lon: -82.4512, label: 'Headquarters · Tampa, FL' }
+};
+
+function rmEnsureLeaflet(){
+  return new Promise((resolve, reject) => {
+    if (window.L) { RM.libReady = true; return resolve(); }
+    const css = document.createElement('link');
+    css.rel = 'stylesheet';
+    css.href = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css';
+    document.head.appendChild(css);
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js';
+    s.onload = () => { RM.libReady = true; resolve(); };
+    s.onerror = () => reject(new Error('Leaflet failed to load'));
+    document.head.appendChild(s);
+  });
+}
+
+function rmRateFor(bank){
+  const m = bank && bank.mapped ? bank.mapped[RM.product] : null;
+  return m ? m : null;
+}
+
+function rmProductLabel(key){
+  const p = ALL_PRODUCTS.find(p => p.key === key);
+  return p ? p.label : key;
+}
+
+async function rmLoadBranches(bank){
+  if (!bank.cert) return null;
+  if (RM.branches[bank.cert]) return RM.branches[bank.cert];
+  const fdicUrl = 'https://banks.data.fdic.gov/api/sod?filters=CERT:' + bank.cert +
+    '&fields=NAMEFULL,ADDRESBR,CITYBR,STALPBR,SIMS_LATITUDE,SIMS_LONGITUDE&limit=1000&format=json';
+  try {
+    const res = await fetch(RM_FDIC_PROXY + encodeURIComponent(fdicUrl));
+    const body = await res.json();
+    const rows = (body && body.data) || [];
+    const pts = [];
+    for (const r of rows){
+      const d = r && r.data ? r.data : r;
+      const lat = parseFloat(d.SIMS_LATITUDE), lon = parseFloat(d.SIMS_LONGITUDE);
+      if (!isFinite(lat) || !isFinite(lon) || (lat === 0 && lon === 0)) continue;
+      pts.push({ lat, lon, label: [d.ADDRESBR, d.CITYBR, d.STALPBR].filter(Boolean).join(', ') });
+    }
+    RM.branches[bank.cert] = pts;
+    return pts;
+  } catch (e) { return null; }
+}
+
+function rmPoints(bank){
+  if (bank.cert && RM.branches[bank.cert] && RM.branches[bank.cert].length) return RM.branches[bank.cert];
+  const hq = RM_CU_HQ[bank.slug];
+  return hq ? [{ lat: hq.lat, lon: hq.lon, label: hq.label, hq: true }] : [];
+}
+
+function rmRender(){
+  if (!RM.map || !window.L) return;
+  RM.layer.clearLayers();
+  const banks = LIVE.banks || [];
+  if (!banks.length){ rmRenderChips(); return; }
+
+  // Who holds the top rate for the selected product?
+  let topSlug = null, topApy = -1;
+  for (const b of banks){
+    const r = rmRateFor(b);
+    if (r && r.apy > topApy){ topApy = r.apy; topSlug = b.slug; }
+  }
+
+  for (const b of banks){
+    const r = rmRateFor(b);
+    const isTop = b.slug === topSlug && r;
+    const isHl = RM.highlight === b.slug;
+    const color = isTop ? '#FFBF3F' : (r ? '#0960BB' : '#aab6c4');
+    const pts = rmPoints(b);
+    for (const pt of pts){
+      const mk = L.circleMarker([pt.lat, pt.lon], {
+        radius: pt.hq ? 9 : (isHl ? 8 : 5.5),
+        color: isHl ? '#002D72' : '#ffffff',
+        weight: isHl ? 3 : 1.25,
+        fillColor: color,
+        fillOpacity: r ? 0.9 : 0.55
+      });
+      const badges = r ? ((r.regional ? ' †' : '') + (r.anomaly ? ' · VERIFY' : '')) : '';
+      mk.bindPopup(
+        '<strong>' + escHtml(b.name) + '</strong><br/>' +
+        escHtml(pt.label || '') + '<br/>' +
+        escHtml(rmProductLabel(RM.product)) + ': ' +
+        (r ? ('<strong>' + r.apy.toFixed(2) + '%</strong>' + escHtml(badges) +
+              '<br/><span style="color:#7a7a7a;font-size:11px;">' + escHtml(r.name || '') +
+              ' · as of ' + escHtml(b.captured || '—') + '</span>')
+           : '<span style="color:#7a7a7a;">no published rate mapped</span>')
+      );
+      RM.layer.addLayer(mk);
+    }
+  }
+  rmRenderChips();
+}
+
+function rmRenderChips(){
+  const wrap = el('mapChips');
+  if (!wrap) return;
+  const banks = (LIVE.banks || []).slice();
+  if (!banks.length){
+    wrap.innerHTML = '<span class="live-pill off">Waiting on the live rate feed — the map fills in once tracked institutions load.</span>';
+    return;
+  }
+  banks.sort((a, b) => {
+    const ra = rmRateFor(a), rb = rmRateFor(b);
+    return (rb ? rb.apy : -1) - (ra ? ra.apy : -1);
+  });
+  wrap.innerHTML = banks.map(b => {
+    const r = rmRateFor(b);
+    const n = rmPoints(b).length;
+    const cls = 'ratesmap-chip' + (RM.highlight === b.slug ? ' hl' : '') + (r ? '' : ' norate');
+    return '<button type="button" class="' + cls + '" data-slug="' + escHtml(b.slug) + '">' +
+      escHtml(b.name) + ' <strong>' + (r ? r.apy.toFixed(2) + '%' : '—') + '</strong>' +
+      '<span class="ratesmap-chip-n">' + n + (n === 1 ? ' pin' : ' branches') + '</span></button>';
+  }).join('');
+  wrap.querySelectorAll('.ratesmap-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const slug = chip.dataset.slug;
+      if (RM.highlight === slug){ RM.highlight = null; rmRender(); return; }
+      RM.highlight = slug;
+      const b = (LIVE.banks || []).find(x => x.slug === slug);
+      const pts = b ? rmPoints(b) : [];
+      if (pts.length && RM.map){
+        RM.map.fitBounds(L.latLngBounds(pts.map(p => [p.lat, p.lon])).pad(0.2));
+      }
+      rmRender();
+    });
+  });
+}
+
+async function rmBuild(){
+  const container = el('ratesMap');
+  if (!container || RM.map) return;
+  RM.map = L.map(container, { scrollWheelZoom: false }).setView([27.95, -82.45], 9);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18,
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(RM.map);
+  RM.layer = L.layerGroup().addTo(RM.map);
+
+  // Product picker — full taxonomy, grouped
+  const sel = el('mapProduct');
+  if (sel && !sel.options.length){
+    sel.innerHTML = PRODUCT_GROUPS.map(g =>
+      '<optgroup label="' + escHtml(g.label) + '">' +
+      g.products.map(p => '<option value="' + p.key + '"' + (p.key === RM.product ? ' selected' : '') + '>' + escHtml(p.label) + '</option>').join('') +
+      '</optgroup>'
+    ).join('');
+    sel.addEventListener('change', () => { RM.product = sel.value; rmRender(); });
+  }
+
+  // Branch loads: sequential per bank, cached, re-render as each arrives
+  RM.loading = true;
+  rmRender();
+  for (const b of (LIVE.banks || [])){
+    if (b.cert){ await rmLoadBranches(b); rmRender(); }
+  }
+  RM.loading = false;
+  postResize();
+}
+
+function openRatesMap(){
+  rmEnsureLeaflet().then(() => {
+    if (!RM.map) rmBuild();
+    else setTimeout(() => { RM.map.invalidateSize(); }, 60);
+    if (RM.map) rmRender();
+  }).catch(() => {
+    const c = el('ratesMap');
+    if (c) c.innerHTML = '<div style="padding:40px;text-align:center;color:#7a7a7a;">Map library failed to load — check the network and reopen this tab.</div>';
+  });
+}
+
+/* Called by fetchLiveMarket when the live feed lands after the map opened. */
+function rmOnLiveData(){
+  if (RM.map){
+    (async () => {
+      for (const b of (LIVE.banks || [])){
+        if (b.cert && !RM.branches[b.cert]) await rmLoadBranches(b);
+      }
+      rmRender();
+    })();
+  }
+}
+/* =================== END RATES MAP =================== */
 
 /* ---- v1.90 live feeds ---- */
 renderLiveStatus();
