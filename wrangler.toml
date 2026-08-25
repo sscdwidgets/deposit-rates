@@ -5,7 +5,7 @@ compatibility_date = "2026-08-01"
 
 # Daily at 11:10 UTC (~7:10am ET) — after DA's overnight rate refresh
 [triggers]
-crons = ["10 11 * * *"]
+crons = ["12,42 * * * *"]  # every 30 min; worker scrapes at most ONE overdue bank per tick
 
 [[d1_databases]]
 binding = "DB"
