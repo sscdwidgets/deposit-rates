@@ -3,12 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>deposit-rates · test console</title>
+<title>deposit-rates · console & prototype</title>
 <style>
   @font-face { font-family:'Cera Pro'; src:url('https://sscdwidgets.github.io/fonts/CeraPro-Regular.ttf') format('truetype'); font-weight:400; font-display:swap; }
   @font-face { font-family:'Cera Pro'; src:url('https://sscdwidgets.github.io/fonts/CeraPro-Medium.ttf') format('truetype'); font-weight:500; font-display:swap; }
   @font-face { font-family:'Cera Pro'; src:url('https://sscdwidgets.github.io/fonts/CeraPro-Bold.ttf') format('truetype'); font-weight:700; font-display:swap; }
-
   :root{
     --navy:#002D72; --gold:#FFBF3F; --blue:#0960BB;
     --bg:#F5F7FA; --card:#FFFFFF; --line:#DDE4EC;
@@ -20,8 +19,7 @@
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Cera Pro',-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--ink);padding:28px 20px 60px;}
   .wrap{max-width:920px;margin:0 auto}
-
-  header{margin-bottom:22px}
+  header{margin-bottom:16px}
   .eyebrow{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);margin-bottom:6px}
   .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--gold);animation:pulse 2s infinite}
   @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,191,63,.55)}50%{box-shadow:0 0 0 6px rgba(255,191,63,0)}}
@@ -29,13 +27,20 @@
   h1{font-size:26px;font-weight:700;color:var(--navy)}
   header p{color:var(--muted);font-size:14px;margin-top:4px}
 
+  .tabs{display:flex;gap:2px;border-bottom:2px solid var(--line);margin:18px 0 20px}
+  .tab{font-family:inherit;font-size:14px;font-weight:700;color:var(--muted);background:none;border:none;padding:10px 18px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px}
+  .tab[aria-selected="true"]{color:var(--navy);border-bottom-color:var(--gold)}
+  .tabpanel{display:none}
+  .tabpanel.active{display:block}
+
   .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:14px}
   .panel h2{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
   .cfg{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .cfg .full{grid-column:1/-1}
   label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:4px}
-  input{width:100%;padding:9px 11px;font-size:13.5px;font-family:var(--mono);border:1px solid var(--line);border-radius:8px;background:#FBFCFE;color:var(--ink)}
-  input:focus{outline:2px solid var(--blue);outline-offset:0;border-color:var(--blue)}
+  input,select{width:100%;padding:9px 11px;font-size:13.5px;font-family:var(--mono);border:1px solid var(--line);border-radius:8px;background:#FBFCFE;color:var(--ink)}
+  select{font-family:inherit}
+  input:focus,select:focus{outline:2px solid var(--blue);outline-offset:0;border-color:var(--blue)}
   .hint{font-size:11.5px;color:var(--muted);margin-top:4px}
 
   .runbar{display:flex;align-items:center;gap:12px;margin:18px 0 14px;flex-wrap:wrap}
@@ -63,7 +68,6 @@
   .step-meta{font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:nowrap}
   .btn.run{background:#EEF3F9;color:var(--navy);padding:7px 14px;font-size:12.5px}
   .btn.run:hover{background:#E1EAF5}
-
   .step-body{display:none;border-top:1px solid var(--line)}
   .step.open .step-body{display:block}
   .urlrow{display:flex;align-items:center;gap:8px;padding:9px 16px;background:#F3F6FA;font-family:var(--mono);font-size:11.5px;color:var(--muted);overflow-x:auto}
@@ -77,8 +81,45 @@
   pre{margin:12px 16px 16px;background:var(--console);color:var(--console-ink);font-family:var(--mono);font-size:12px;line-height:1.55;border-radius:8px;padding:14px;overflow:auto;max-height:420px;white-space:pre-wrap;word-break:break-word}
   pre .k{color:#7FB4E8} pre .s{color:#A8D5A2} pre .n{color:#F0C674} pre .b{color:#E8A87F}
 
+  /* ---------- prototype tab ---------- */
+  .proto-controls{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:16px}
+  .proto-controls .grp{flex:1;min-width:200px}
+  .pills{display:flex;gap:6px;flex-wrap:wrap}
+  .pill{font-family:inherit;font-size:12.5px;font-weight:700;color:var(--navy);background:#EEF3F9;border:1px solid transparent;border-radius:99px;padding:7px 16px;cursor:pointer}
+  .pill[aria-pressed="true"]{background:var(--navy);color:#fff}
+  .summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .stat .lab{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .stat .val{font-size:22px;font-weight:700;color:var(--navy);margin-top:4px}
+  .stat .sub{font-size:12px;color:var(--muted);margin-top:2px}
+  .stat.gapAhead .val{color:var(--ok)} .stat.gapBehind .val{color:var(--fail)}
+  .board{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .board-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line)}
+  .board-head h3{font-size:15px;font-weight:700;color:var(--navy)}
+  .board-head .bench{font-size:12.5px;color:var(--muted)}
+  .row{display:grid;grid-template-columns:minmax(150px,1.4fr) minmax(120px,1fr) 2fr 84px;gap:12px;align-items:center;padding:11px 18px;border-bottom:1px solid #EDF1F6}
+  .row:last-child{border-bottom:none}
+  .row.you{background:#FFFBEF;border-left:4px solid var(--gold);padding-left:14px}
+  .row .bank{font-weight:700;font-size:13.5px}
+  .row.you .bank::after{content:'YOU';font-size:9px;font-weight:700;letter-spacing:.08em;background:var(--gold);color:var(--navy);border-radius:4px;padding:2px 5px;margin-left:7px;vertical-align:2px}
+  .row .acct{font-size:12.5px;color:var(--muted)}
+  .row .meta{font-size:11px;color:var(--muted)}
+  .badge{display:inline-block;font-size:9.5px;font-weight:700;border-radius:4px;padding:1px 5px;margin-left:5px;vertical-align:1px}
+  .badge.reg{background:#EEF3F9;color:var(--blue)}
+  .badge.anom{background:#FBEAE7;color:var(--fail)}
+  .barwrap{position:relative;height:22px;background:#F0F4F9;border-radius:6px;overflow:hidden}
+  .bar{position:absolute;inset:0 auto 0 0;background:var(--blue);border-radius:6px;min-width:2px}
+  .row.you .bar{background:var(--navy)}
+  .benchline{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--fail);opacity:.75}
+  .apy{font-family:var(--mono);font-size:14.5px;font-weight:700;color:var(--navy);text-align:right}
+  .empty{padding:36px 20px;text-align:center;color:var(--muted);font-size:13.5px}
+  .proto-note{font-size:11.5px;color:var(--muted);margin-top:14px;line-height:1.6}
   footer{margin-top:26px;font-size:11.5px;color:var(--muted);font-family:var(--mono)}
-  @media (max-width:640px){.cfg{grid-template-columns:1fr}.step-meta{display:none}}
+  @media (max-width:640px){
+    .cfg{grid-template-columns:1fr}.step-meta{display:none}
+    .row{grid-template-columns:1fr 76px;grid-template-areas:"a d" "b d" "c c"}
+    .row>:nth-child(1){grid-area:a}.row>:nth-child(2){grid-area:b}.row>:nth-child(3){grid-area:c}.row>:nth-child(4){grid-area:d}
+  }
 </style>
 </head>
 <body>
@@ -86,45 +127,86 @@
 
   <header>
     <div class="eyebrow"><span class="dot"></span>Deposit Rates Pipeline</div>
-    <h1>Worker test console</h1>
-    <p>Runs the five-step smoke test against the deposit-rates worker and the fred-proxy benchmark. Steps run in order; a hard failure stops the sequence.</p>
+    <h1 id="pageTitle">Worker test console</h1>
+    <p id="pageSub">Runs the five-step smoke test against the deposit-rates worker and the fred-proxy benchmark.</p>
   </header>
 
-  <div class="panel">
-    <h2>Configuration</h2>
-    <div class="cfg">
-      <div class="full">
-        <label for="base">Worker base URL</label>
-        <input id="base" value="https://deposit-rates.jameswspence.workers.dev" spellcheck="false">
-      </div>
-      <div>
-        <label for="key">Admin key</label>
-        <input id="key" type="password" placeholder="ADMIN_KEY secret" spellcheck="false">
-        <div class="hint">Kept in this tab only — never saved.</div>
-      </div>
-      <div>
-        <label for="slug">Bank slug</label>
-        <input id="slug" value="south-state-bank" spellcheck="false">
-      </div>
-      <div>
-        <label for="cert">FDIC cert #</label>
-        <input id="cert" value="33555" spellcheck="false">
-      </div>
-      <div>
-        <label for="fred">fred-proxy series URL (benchmark)</label>
-        <input id="fred" value="https://fred-proxy.jameswspence.workers.dev/series?id=SNDR" spellcheck="false">
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tabBtn-console" aria-selected="true" data-tab="console">Test console</button>
+    <button class="tab" role="tab" id="tabBtn-proto" aria-selected="false" data-tab="proto">Competitor rates prototype</button>
+  </div>
+
+  <!-- ============ TAB 1: TEST CONSOLE ============ -->
+  <section class="tabpanel active" id="tab-console" role="tabpanel">
+    <div class="panel">
+      <h2>Configuration</h2>
+      <div class="cfg">
+        <div class="full">
+          <label for="base">Worker base URL</label>
+          <input id="base" value="https://deposit-rates.jameswspence.workers.dev" spellcheck="false">
+        </div>
+        <div>
+          <label for="key">Admin key</label>
+          <input id="key" type="password" placeholder="ADMIN_KEY secret" spellcheck="false">
+          <div class="hint">Kept in this tab only — never saved.</div>
+        </div>
+        <div>
+          <label for="slug">Bank slug</label>
+          <input id="slug" value="south-state-bank" spellcheck="false">
+        </div>
+        <div>
+          <label for="cert">FDIC cert #</label>
+          <input id="cert" value="33555" spellcheck="false">
+        </div>
+        <div>
+          <label for="fred">fred-proxy base URL</label>
+          <input id="fred" value="https://fred-proxy.jameswspence.workers.dev" spellcheck="false">
+          <div class="hint">Benchmarks use /series?id=… on this base.</div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div class="runbar">
-    <button class="btn primary" id="runAll">Run full sequence</button>
-    <span class="status" id="seqStatus"></span>
-  </div>
+    <div class="runbar">
+      <button class="btn primary" id="runAll">Run full sequence</button>
+      <span class="status" id="seqStatus"></span>
+    </div>
 
-  <div id="steps"></div>
+    <div id="steps"></div>
+  </section>
 
-  <footer>console cx-1.0.1 · worker target build dr-1.0.0</footer>
+  <!-- ============ TAB 2: PROTOTYPE ============ -->
+  <section class="tabpanel" id="tab-proto" role="tabpanel">
+    <div class="proto-controls">
+      <div class="grp">
+        <label>Product category</label>
+        <div class="pills" id="catPills">
+          <button class="pill" data-cat="cd" aria-pressed="true">CDs</button>
+          <button class="pill" data-cat="savings" aria-pressed="false">Savings</button>
+          <button class="pill" data-cat="mma" aria-pressed="false">Money Market</button>
+          <button class="pill" data-cat="checking" aria-pressed="false">Checking</button>
+        </div>
+      </div>
+      <div class="grp" style="max-width:280px">
+        <label for="youSel">Your bank</label>
+        <select id="youSel"><option value="">(none)</option></select>
+      </div>
+      <div><button class="btn primary" id="protoReload">Reload data</button></div>
+    </div>
+
+    <div class="summary" id="summary"></div>
+
+    <div class="board">
+      <div class="board-head">
+        <h3 id="boardTitle">CD rates — tracked market</h3>
+        <span class="bench" id="benchLabel"></span>
+      </div>
+      <div id="board"><div class="empty">Loading market data…</div></div>
+    </div>
+
+    <p class="proto-note">Prototype of the Deposit Command Competitor Rates view. Published rates collected from DepositAccounts.com per-bank pages; regionally-priced products (marked †) reflect the region nearest each institution's headquarters. National averages: FDIC National Rates via FRED. Always verify rates with the institution before relying on them.</p>
+  </section>
+
+  <footer>console cx-2.0.0 · worker target build dr-1.0.2</footer>
 </div>
 
 <script>
@@ -132,24 +214,47 @@
   'use strict';
   var $ = function(id){ return document.getElementById(id); };
 
-  // Persist everything except the key
+  /* ---------- config persistence ---------- */
   ['base','slug','cert','fred'].forEach(function(id){
-    try{ var v = localStorage.getItem('dr-'+id); if(v) $(id).value = v; }catch(e){}
+    try{
+      var v = localStorage.getItem('dr-'+id);
+      if(v){
+        if(id==='fred' && v.indexOf('/series')>-1) v = v.split('/series')[0]; // migrate old full-URL value
+        $(id).value = v;
+      }
+    }catch(e){}
     $(id).addEventListener('change', function(){ try{ localStorage.setItem('dr-'+id, $(id).value.trim()); }catch(e){} });
   });
-
   var cfg = function(){
     return {
       base: $('base').value.trim().replace(/\/+$/,''),
       key: $('key').value.trim(),
       slug: $('slug').value.trim(),
       cert: $('cert').value.trim(),
-      fred: $('fred').value.trim()
+      fred: $('fred').value.trim().replace(/\/+$/,'')
     };
   };
 
-  /* ---- step definitions ------------------------------------------------ */
-  // verdict(body, httpStatus) -> { state: ok|warn|fail, chips: [{t,cls}] }
+  /* ---------- tabs ---------- */
+  var TAB_META = {
+    console:{ t:'Worker test console', s:'Runs the five-step smoke test against the deposit-rates worker and the fred-proxy benchmark.' },
+    proto:{ t:'Competitor rates — prototype', s:'A working preview of the Deposit Command Competitor Rates view, fed live by the pipeline.' }
+  };
+  function showTab(name){
+    ['console','proto'].forEach(function(n){
+      $('tab-'+n).classList.toggle('active', n===name);
+      $('tabBtn-'+n).setAttribute('aria-selected', n===name ? 'true':'false');
+    });
+    $('pageTitle').textContent = TAB_META[name].t;
+    $('pageSub').textContent = TAB_META[name].s;
+    if(history.replaceState) history.replaceState(null,'','#'+name);
+    if(name==='proto' && !protoLoaded) loadProto();
+  }
+  document.querySelector('.tabs').addEventListener('click', function(e){
+    var b = e.target.closest('.tab'); if(b) showTab(b.dataset.tab);
+  });
+
+  /* ================= TEST CONSOLE (unchanged behavior) ================= */
   var STEPS = [
     {
       id:'health', title:'Worker health', sub:'Build tag, D1 wiring, tracked banks',
@@ -163,7 +268,7 @@
       }
     },
     {
-      id:'debug', title:'Live parse check', sub:'Fetches the DepositAccounts page without storing — the moment of truth',
+      id:'debug', title:'Live parse check', sub:'Fetches the DepositAccounts page without storing — costs one hit against DA',
       url:function(c){ return c.base + '/debug?slug=' + encodeURIComponent(c.slug) + '&key=' + encodeURIComponent(c.key); },
       verdict:function(b, http){
         if(http === 403 || (b && b.error === 'Forbidden')) return { state:'fail', chips:[{t:'403 from worker — admin key wrong or missing', cls:'bad'}] };
@@ -179,7 +284,7 @@
           if(is404) return { state:'warn', chips:[{t:'404 — no page at that slug; verify depositaccounts.com/banks/SLUG.html in a browser', cls:'mid'}] };
           return { state:'fail', chips:[{t:b.detail + ' from DepositAccounts — likely bot-blocking; wait a few hours before retrying', cls:'bad'}] };
         }
-        if(b && b.status === 'parse_empty') return { state:'warn', chips:[{t:'Page fetched but no rate rows matched — send the diag block back for a parser fix', cls:'mid'}] };
+        if(b && b.status === 'parse_empty') return { state:'warn', chips:[{t:'Page fetched but no rate rows matched — could be a non-publishing bank, or send the diag block back for a parser fix', cls:'mid'}] };
         return { state:'fail', chips:[{t:'Unexpected response', cls:'bad'}] };
       }
     },
@@ -198,7 +303,7 @@
       url:function(c){ return c.base + '/rates?cert=' + encodeURIComponent(c.cert); },
       verdict:function(b){
         var banks = (b && b.banks) || [];
-        if(!banks.length) return { state:'fail', chips:[{t:'Empty payload — cert mismatch, or step 3 didn\u2019t store', cls:'bad'}] };
+        if(!banks.length) return { state:'fail', chips:[{t:'Empty payload — cert mismatch, or nothing stored yet', cls:'bad'}] };
         var chips = [{t:banks.length+' bank'+(banks.length===1?'':'s'), cls:'good'}];
         var n = 0, topCd = null;
         banks.forEach(function(bk){ (bk.products||[]).forEach(function(p){ n++; if(p.category==='cd' && (!topCd || p.apy > topCd.apy)) topCd = p; }); });
@@ -208,17 +313,17 @@
       }
     },
     {
-      id:'bench', title:'National benchmark', sub:'FDIC national rate via fred-proxy — no new plumbing if this answers',
-      url:function(c){ return c.fred; },
+      id:'bench', title:'National benchmark', sub:'FDIC national rate (savings, series SNDR) via fred-proxy',
+      url:function(c){ return c.fred + '/series?id=SNDR'; },
       verdict:function(b, http){
         if(http !== 200) return { state:'fail', chips:[{t:'HTTP '+http+' from fred-proxy', cls:'bad'}] };
         if(b && b.error) return { state:'warn', chips:[{t:'Proxy answered with an error — check the series ID', cls:'mid'}] };
-        var obs = (b && (b.observations || b.data || b.values)) || null;
+        var obs = extractObs(b);
         var chips = [{t:'fred-proxy answered', cls:'good'}];
-        if(Array.isArray(obs) && obs.length){
+        if(obs && obs.length){
           var last = obs[obs.length-1];
           chips.push({t:obs.length+' observations', cls:''});
-          if(last && (last.value !== undefined)) chips.push({t:'latest '+last.value+(last.date?' ('+last.date+')':''), cls:''});
+          if(last && last.value !== undefined) chips.push({t:'latest '+last.value+(last.date?' ('+last.date+')':''), cls:''});
         } else {
           chips.push({t:'shape unrecognized — verify visually below', cls:'mid'});
         }
@@ -227,7 +332,6 @@
     }
   ];
 
-  /* ---- rendering ------------------------------------------------------- */
   var host = $('steps');
   STEPS.forEach(function(s, i){
     var el = document.createElement('div');
@@ -264,17 +368,14 @@
   });
 
   function redact(u){ return u.replace(/([?&]key=)[^&]*/,'$1\u2022\u2022\u2022'); }
-
   function paintJSON(pre, obj){
-    var raw = JSON.stringify(obj, null, 2)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    var raw = JSON.stringify(obj, null, 2).replace(/&/g,'&amp;').replace(/</g,'&lt;');
     raw = raw.replace(/("(?:[^"\\]|\\.)*")(\s*:)?/g, function(m, str, colon){
       return colon ? '<span class="k">'+str+'</span>'+colon : '<span class="s">'+str+'</span>';
     }).replace(/\b(true|false|null)\b/g,'<span class="b">$1</span>')
       .replace(/(:\s*)(-?\d+(?:\.\d+)?)/g,'$1<span class="n">$2</span>');
     pre.innerHTML = raw;
   }
-
   function setState(id, state){ $('step-' + id).dataset.state = state; }
 
   function runStep(i){
@@ -288,7 +389,6 @@
     var url = s.url(c);
     $('url-' + s.id).textContent = 'GET ' + redact(url);
     var t0 = performance.now();
-
     return fetch(url).then(function(res){
       return res.text().then(function(txt){
         var ms = Math.round(performance.now() - t0);
@@ -297,7 +397,7 @@
         $('meta-' + s.id).textContent = res.status + ' \u00b7 ' + ms + 'ms';
         if(body) paintJSON($('out-' + s.id), body);
         else $('out-' + s.id).textContent = txt.slice(0, 4000) || '(empty body)';
-        var v = body || res.ok ? s.verdict(body, res.status) : { state:'fail', chips:[{t:'HTTP '+res.status, cls:'bad'}] };
+        var v = (body || res.ok) ? s.verdict(body, res.status) : { state:'fail', chips:[{t:'HTTP '+res.status, cls:'bad'}] };
         setState(s.id, v.state);
         $('chips-' + s.id).innerHTML = v.chips.map(function(ch){
           return '<span class="chip ' + (ch.cls||'') + '">' + ch.t + '</span>';
@@ -330,6 +430,145 @@
     }
     next();
   });
+
+  /* ================= PROTOTYPE TAB ================= */
+  var protoLoaded = false;
+  var market = [];            // banks from /rates
+  var activeCat = 'cd';
+  var benchCache = {};        // cat -> {value,date} | null(failed) ; undefined = not tried
+  var BENCH = {               // FRED series for FDIC national rates. SNDR verified; others best-guess, fail gracefully.
+    savings:{ id:'SNDR',     label:'savings' },
+    mma:    { id:'MMNDR',    label:'money market' },
+    checking:{id:'ICNDR',    label:'interest checking' },
+    cd:     { id:'NDR12MCD', label:'12-mo CD' }
+  };
+  var CAT_TITLES = { cd:'CD rates', savings:'Savings rates', mma:'Money market rates', checking:'Checking rates' };
+
+  function extractObs(b){
+    if(!b) return null;
+    var cand = b.observations || b.data || b.values || (b.series && b.series.observations);
+    return Array.isArray(cand) ? cand : null;
+  }
+
+  function loadProto(){
+    protoLoaded = true;
+    $('board').innerHTML = '<div class="empty">Loading market data\u2026</div>';
+    fetch(cfg().base + '/rates').then(function(r){ return r.json(); }).then(function(b){
+      market = (b && b.banks) || [];
+      // fill your-bank select
+      var sel = $('youSel'), stored = null;
+      try{ stored = localStorage.getItem('dr-you'); }catch(e){}
+      sel.innerHTML = '<option value="">(none)</option>' + market.map(function(bk){
+        return '<option value="'+bk.slug+'">'+esc(bk.name || bk.slug)+'</option>';
+      }).join('');
+      var def = stored && market.some(function(bk){return bk.slug===stored;}) ? stored
+              : (market.some(function(bk){return bk.slug==='south-state-bank';}) ? 'south-state-bank' : '');
+      sel.value = def;
+      render();
+    }).catch(function(){
+      market = [];
+      $('board').innerHTML = '<div class="empty">Couldn\u2019t reach the worker \u2014 check the base URL on the Test console tab.</div>';
+      $('summary').innerHTML = '';
+    });
+  }
+
+  function loadBench(cat){
+    if(benchCache[cat] !== undefined){ paintBench(cat); return; }
+    var meta = BENCH[cat];
+    fetch(cfg().fred + '/series?id=' + meta.id).then(function(r){ return r.json(); }).then(function(b){
+      var obs = extractObs(b);
+      var last = obs && obs.length ? obs[obs.length-1] : null;
+      var v = last ? parseFloat(last.value) : NaN;
+      benchCache[cat] = isFinite(v) ? { value:v, date:last.date || '' } : null;
+      paintBench(cat); render();
+    }).catch(function(){ benchCache[cat] = null; paintBench(cat); });
+  }
+  function paintBench(cat){
+    var b = benchCache[cat], meta = BENCH[cat];
+    $('benchLabel').textContent = b ? ('FDIC natl avg ('+meta.label+'): '+b.value.toFixed(2)+'%') : '';
+  }
+
+  function rowsFor(cat){
+    var rows = [];
+    market.forEach(function(bk){
+      (bk.products||[]).forEach(function(p){
+        if(p.category === cat) rows.push({ bank:bk.name||bk.slug, slug:bk.slug, captured:bk.captured_at, p:p });
+      });
+    });
+    rows.sort(function(a,b){ return b.p.apy - a.p.apy; });
+    return rows;
+  }
+
+  function render(){
+    var rows = rowsFor(activeCat);
+    var you = $('youSel').value;
+    $('boardTitle').textContent = CAT_TITLES[activeCat] + ' \u2014 tracked market';
+    loadBench(activeCat);
+    var bench = benchCache[activeCat] || null;
+
+    if(!rows.length){
+      $('board').innerHTML = '<div class="empty">No '+CAT_TITLES[activeCat].toLowerCase()+' captured yet. Snapshots build as the cron works through the bank list \u2014 or this market simply doesn\u2019t publish this product.</div>';
+      $('summary').innerHTML = '';
+      return;
+    }
+
+    var maxApy = Math.max(rows[0].p.apy, bench ? bench.value : 0) || 1;
+    $('board').innerHTML = rows.map(function(r){
+      var w = Math.max(2, (r.p.apy / maxApy) * 100);
+      var benchPos = bench ? Math.min(100, (bench.value / maxApy) * 100) : null;
+      var badges = (r.p.regional ? '<span class="badge reg" title="Regionally priced \u2014 HQ region shown">\u2020</span>' : '')
+                 + (r.p.anomaly ? '<span class="badge anom" title="Moved >2pp since last capture \u2014 verify">VERIFY</span>' : '');
+      var tiers = r.p.tiers && r.p.tiers.length ? ' \u00b7 '+r.p.tiers.length+' tiers' : '';
+      return '<div class="row'+(r.slug===you?' you':'')+'">'
+        + '<div><div class="bank">'+esc(r.bank)+'</div><div class="meta">as of '+esc(String(r.captured||'').slice(0,10))+'</div></div>'
+        + '<div><div class="acct">'+esc(r.p.account_name)+badges+'</div><div class="meta">min '+esc(r.p.min_deposit||'\u2014')+tiers+'</div></div>'
+        + '<div class="barwrap"><span class="bar" style="width:'+w.toFixed(1)+'%"></span>'
+        + (benchPos!==null ? '<span class="benchline" style="left:'+benchPos.toFixed(1)+'%" title="FDIC national average"></span>' : '')
+        + '</div>'
+        + '<div class="apy">'+r.p.apy.toFixed(2)+'%</div>'
+        + '</div>';
+    }).join('');
+
+    // summary stats
+    var top = rows[0];
+    var yourRows = rows.filter(function(r){ return r.slug===you; });
+    var yourBest = yourRows.length ? yourRows[0] : null;
+    var topOther = rows.find(function(r){ return r.slug!==you; }) || null;
+    var stats = [
+      stat('Top of market', top.p.apy.toFixed(2)+'%', esc(top.bank)),
+      stat('Institutions', String(new Set(rows.map(function(r){return r.slug;})).size), rows.length+' products')
+    ];
+    if(bench) stats.push(stat('FDIC natl avg', bench.value.toFixed(2)+'%', BENCH[activeCat].label + (bench.date? ' \u00b7 '+bench.date:'')));
+    if(yourBest){
+      var gap = topOther ? Math.round((yourBest.p.apy - topOther.p.apy) * 100) : 0;
+      var cls = gap >= 0 ? 'gapAhead' : 'gapBehind';
+      stats.push('<div class="stat '+cls+'"><div class="lab">Your best vs market</div><div class="val">'+(gap>=0?'+':'')+gap+' bps</div><div class="sub">'+esc(yourBest.p.account_name)+' at '+yourBest.p.apy.toFixed(2)+'%</div></div>');
+    } else if(you){
+      stats.push(stat('Your best', '\u2014', 'no published product in this category'));
+    }
+    $('summary').innerHTML = stats.join('');
+  }
+  function stat(lab, val, sub){
+    return '<div class="stat"><div class="lab">'+lab+'</div><div class="val">'+val+'</div><div class="sub">'+(sub||'')+'</div></div>';
+  }
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  $('catPills').addEventListener('click', function(e){
+    var b = e.target.closest('.pill'); if(!b) return;
+    activeCat = b.dataset.cat;
+    Array.prototype.forEach.call(document.querySelectorAll('#catPills .pill'), function(p){
+      p.setAttribute('aria-pressed', p===b ? 'true':'false');
+    });
+    render();
+  });
+  $('youSel').addEventListener('change', function(){
+    try{ localStorage.setItem('dr-you', $('youSel').value); }catch(e){}
+    render();
+  });
+  $('protoReload').addEventListener('click', function(){ benchCache = {}; loadProto(); });
+
+  /* ---------- boot ---------- */
+  if(location.hash === '#proto') showTab('proto'); else showTab('console');
 })();
 </script>
 </body>
