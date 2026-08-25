@@ -124,7 +124,7 @@
 
   <div id="steps"></div>
 
-  <footer>console cx-1.0.0 · worker target build dr-1.0.0</footer>
+  <footer>console cx-1.0.1 · worker target build dr-1.0.0</footer>
 </div>
 
 <script>
@@ -174,7 +174,11 @@
           if(b.health) chips.push({t:'DA health '+b.health, cls:''});
           return { state:'ok', chips:chips };
         }
-        if(b && b.status === 'http_error') return { state:'fail', chips:[{t:b.detail + ' from DepositAccounts — likely blocking Cloudflare IPs', cls:'bad'}] };
+        if(b && b.status === 'http_error'){
+          var is404 = /\b404\b/.test(b.detail || '');
+          if(is404) return { state:'warn', chips:[{t:'404 — no page at that slug; verify depositaccounts.com/banks/SLUG.html in a browser', cls:'mid'}] };
+          return { state:'fail', chips:[{t:b.detail + ' from DepositAccounts — likely bot-blocking; wait a few hours before retrying', cls:'bad'}] };
+        }
         if(b && b.status === 'parse_empty') return { state:'warn', chips:[{t:'Page fetched but no rate rows matched — send the diag block back for a parser fix', cls:'mid'}] };
         return { state:'fail', chips:[{t:'Unexpected response', cls:'bad'}] };
       }
