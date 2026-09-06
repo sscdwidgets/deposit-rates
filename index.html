@@ -228,9 +228,9 @@ var $ = function(id){ return document.getElementById(id); };
 var esc = function(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
 
 /* ---------------- config ---------------- */
-var API  = 'https://fdic-api.jameswspence.workers.dev';        // market structure (footprint explorer worker)
-var FRED = 'https://fred-proxy.jameswspence.workers.dev';      // FRED series + county metrics
-var FDIC = 'https://fdic-proxy.jameswspence.workers.dev/?url=';// raw FDIC BankFind passthrough
+var API  = 'https://fdic-api.sscd-labs.workers.dev';        // market structure (footprint explorer worker)
+var FRED = 'https://fred-proxy.sscd-labs.workers.dev';      // FRED series + county metrics
+var FDIC = 'https://fdic-proxy.sscd-labs.workers.dev/?url=';// raw FDIC BankFind passthrough
 var BUILD = 'pc-1.0.0';
 
 var STATES = [["AL","Alabama"],["AK","Alaska"],["AZ","Arizona"],["AR","Arkansas"],["CA","California"],["CO","Colorado"],["CT","Connecticut"],["DE","Delaware"],["DC","District of Columbia"],["FL","Florida"],["GA","Georgia"],["HI","Hawaii"],["ID","Idaho"],["IL","Illinois"],["IN","Indiana"],["IA","Iowa"],["KS","Kansas"],["KY","Kentucky"],["LA","Louisiana"],["ME","Maine"],["MD","Maryland"],["MA","Massachusetts"],["MI","Michigan"],["MN","Minnesota"],["MS","Mississippi"],["MO","Missouri"],["MT","Montana"],["NE","Nebraska"],["NV","Nevada"],["NH","New Hampshire"],["NJ","New Jersey"],["NM","New Mexico"],["NY","New York"],["NC","North Carolina"],["ND","North Dakota"],["OH","Ohio"],["OK","Oklahoma"],["OR","Oregon"],["PA","Pennsylvania"],["RI","Rhode Island"],["SC","South Carolina"],["SD","South Dakota"],["TN","Tennessee"],["TX","Texas"],["UT","Utah"],["VT","Vermont"],["VA","Virginia"],["WA","Washington"],["WV","West Virginia"],["WI","Wisconsin"],["WY","Wyoming"]];
